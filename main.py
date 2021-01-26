@@ -10,18 +10,18 @@ import numpy as np
 # rhs array size = # of constraints
 # concatenate, then checks.
 
-nr_decision_vars = int(input('number of decision variables: '))
+nr_vars = int(input('number of decision variables: '))
 nr_const = int(input('number of constraints: '))
-obj = np.zeros(nr_decision_vars+2*nr_const)
-const = np.zeros((nr_const, nr_decision_vars))
+obj = np.zeros(nr_vars+2*nr_const)
+const = np.zeros((nr_const, nr_vars))
 
-for i in range(nr_decision_vars):
+for i in range(nr_vars):
 	obj[i] = input(f'obj fun coef {i+1}: ')
 print(obj)
 const_ineq = np.empty(nr_const, dtype=str)
 
 for row in range(nr_const):
-	for col in range(nr_decision_vars):
+	for col in range(nr_vars):
 		const[row,col] = float(input(f'constraint {row+1}, coef {col+1}: '))
 	const_ineq[row] = input(' = , < , > : ')
 
@@ -31,9 +31,9 @@ for i in range(nr_const):
 rhs = np.array([rhs])
 
 slack = np.identity(nr_const)
-art = np.zeros((nr_const,nr_const))
+artif = np.zeros((nr_const,nr_const))
 
-big_matrix = np.concatenate((const, slack, art, rhs.T), axis = 1)
+big_matrix = np.concatenate((const, slack, artif, rhs.T), axis = 1)
 Cb = np.zeros(nr_const)
 num_rows, num_cols = big_matrix.shape
 cz = np.zeros(num_cols)
@@ -56,12 +56,12 @@ j = 0
 for val in const_ineq:
 	if val == '=':
 		index = int(np.where(const_ineq == val)[0][i])
-		big_matrix[index, nr_decision_vars+row] == 0
+		big_matrix[index, nr_vars+row] == 0
 		i += 1
 	elif val == '>':
 		index = int(np.where(const_ineq == val)[0][j])
 		big_matrix[index, -nr_const-1+index] = 1
-		big_matrix[index, nr_decision_vars+index] = -1
+		big_matrix[index, nr_vars+index] = -1
 		obj[-nr_const+index] = -M
 		Cb[index] = -M
 		j += 1
@@ -81,9 +81,9 @@ while (True):
 	pivot_col = int(np.where(cz == max(cz))[0][0])
 	#var going in
 	
-	if pivot_col in range(nr_decision_vars):
+	if pivot_col in range(nr_vars):
 		var_in = 'x'
-	elif pivot_col in range(nr_decision_vars, nr_decision_vars+nr_const):
+	elif pivot_col in range(nr_vars, nr_vars+nr_const):
 		var_in = 's'
 	else:
 		var_in = 'a'
