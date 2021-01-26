@@ -48,25 +48,33 @@ for _rhs in rhs[0]:
 		index = int(np.where(rhs == _rhs)[0])
 		big_matrix[index, :] = -1*big_matrix[index, :]
 		if const_ineq[index] == '>':
-			const_ineq[index] == '<'
+			const_ineq[index] = '<'
 		if const_ineq[index] == '<':
-			const_ineq[index] == '>'
+			const_ineq[index] = '>'
+
 i = 0
 j = 0
 for val in const_ineq:
 	if val == '=':
 		index = int(np.where(const_ineq == val)[0][i])
 		big_matrix[index, nr_decision_vars+row] == 0
-		i+= 1
+		i += 1
 	elif val == '>':
 		index = int(np.where(const_ineq == val)[0][j])
 		big_matrix[index, -nr_const-1+index] = 1
+		big_matrix[index, nr_decision_vars+index] = -1
 		obj[-nr_const+index] = -M
 		Cb[index] = -M
 		j += 1
 iter = 0 
 
+for column in big_matrix.T:
+	z[i] = np.dot(column, Cb)
+	i +=1
+for i in range(len(obj)):
+	cz[i] = obj[i]-z[i]
 
+	
 while (True):
     #finding pivot element
 	pivot_col = int(np.where(cz == max(cz))[0][0])
@@ -77,8 +85,7 @@ while (True):
 		else: 
 			temp.append(9999)
 	pivot_row = int(np.where(temp == min(temp))[0][0])
-	print(np.where(temp == min(temp)))
-	print(f'x_{pivot_col+1} entering the table, s_{pivot_row+1} exiting.')
+
 	#gauss elim
 	pivot = big_matrix[pivot_row][pivot_col]
 
@@ -96,7 +103,7 @@ while (True):
 		i +=1
 	for i in range(len(obj)):
 		cz[i] = obj[i]-z[i]
-	print(max(cz))
+
 
 	
 	if (all(i <= 0 for i in cz) or all(i !=0 for i in Cb)):
