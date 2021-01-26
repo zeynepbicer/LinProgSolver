@@ -22,7 +22,6 @@ for idx, line in enumerate(f):
 		num_vars, num_const = int(strs[0]), int(strs[1])
 		obj = np.zeros(num_vars+2*num_const)
 		const = np.zeros((num_const, num_vars))
-		const_ineq = np.empty(num_const, dtype=str)
 		rhs = np.zeros(num_const)
 	elif idx == 1:
 		strs = line.split()
@@ -32,33 +31,12 @@ for idx, line in enumerate(f):
 		strs = line.split()
 		for col in range(num_vars):
 			const[idx-2,col] = float(strs[col])
-		const_ineq[idx-2] = strs[-2]
+		const_ineq.append(strs[-2])
 		rhs[idx-2] = float(strs[-1])
 
 
 rhs = np.array([rhs])
-const_ineq = np.array(const_ineq)		
-
-# num_vars = int(input('number of decision variables: '))
-# num_const = int(input('number of constraints: '))
-# obj = np.zeros(num_vars+2*num_const)
-# const = np.zeros((num_const, num_vars))
-
-# for i in range(num_vars):
-# 	obj[i] = input(f'obj fun coef {i+1}: ')
-
-#const_ineq = np.empty(num_const, dtype=str)
-
-# for row in range(num_const):
-# 	for col in range(num_vars):
-# 		const[row,col] = float(input(f'constraint {row+1}, coef {col+1}: '))
-# 	const_ineq[row] = input(' = , < , > : ')
-
-# rhs = np.zeros(num_const)
-# for i in range(num_const):
-# 	rhs[i] = int(input(f'rhs for const {i+1}: '))
-# rhs = np.array([rhs])
-
+	
 slack = np.identity(num_const)
 artif = np.zeros((num_const,num_const))
 
@@ -74,16 +52,16 @@ M = 9999
 for index, _rhs in enumerate(rhs[0]):
 	if _rhs < 0:
 		big_matrix[index, :] = -1*big_matrix[index, :]
-		if const_ineq[index] == '>':
-			const_ineq[index] = '<'
-		if const_ineq[index] == '<':
-			const_ineq[index] = '>'
+		if const_ineq[index] == '>=':
+			const_ineq[index] = '<='
+		if const_ineq[index] == '<=':
+			const_ineq[index] = '>='
 
 
 for index, val in enumerate(const_ineq):
-	if val == '=':
-		big_matrix[index, num_vars+row] == 0
-	elif val == '>':
+	if val == '==':
+		big_matrix[index, num_vars+index] = 0
+	elif val == '>=':
 		big_matrix[index, -num_const-1+index] = 1
 		big_matrix[index, num_vars+index] = -1
 		obj[-num_const+index] = -M
