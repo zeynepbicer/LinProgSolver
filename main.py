@@ -1,21 +1,20 @@
 import numpy as np
 
-# inputs:
-# number of decision variables
-# number of constraints
-# --- size of the obj function array =  # of d.v + # of const. x2
-# --- size of the const matrix = # of const, #of d.v
-# obj fun coefs - fills the obj
-# constraint coefs - fills the const matrix
-# rhs array size = # of constraints
-# concatenate, then checks.
+# a = np.arange(2,10)
+# print(a)
+# print(len(a))
+# a = np.insert(a, 2, 999)
+
+# print(a)
+# print(len(a))
 f = open("inputs", 'r')
 
 obj = []
 const = []
 rhs = []
 const_ineq = []
-
+var_const = []
+all_vars = []
 for idx, line in enumerate(f):
 	if idx == 0:
 		strs = line.split()
@@ -23,20 +22,38 @@ for idx, line in enumerate(f):
 		obj = np.zeros(num_vars+2*num_const)
 		const = np.zeros((num_const, num_vars))
 		rhs = np.zeros(num_const)
+		var_const = np.zeros(num_vars)
 	elif idx == 1:
 		strs = line.split()
 		for i in range(num_vars):
+			var_const[i] = int(strs[i])
+	elif idx == 2:
+		strs = line.split()
+		for i in range(num_vars):
 			obj[i] = float(strs[i])
+	elif idx == 3:
+		if line.strip() == 'min':
+			obj = -1*obj
 	else:
 		strs = line.split()
-		for col in range(num_vars):
-			const[idx-2,col] = float(strs[col])
+		for col in range(num_vars): 
+			const[idx-4,col] = float(strs[col])
 		const_ineq.append(strs[-2])
-		rhs[idx-2] = float(strs[-1])
+		rhs[idx-4] = float(strs[-1])
 
-
+for index, val in enumerate(var_const):
+	if val == 0:
+		num_vars = num_vars + 1
+		obj = np.insert(obj, index+1, -1*obj[index])
+		ratio = np.zeros((num_const,1))
+		const1 = const[:, :index+1]
+		const2 = const[:,index+1:]
+		const = np.concatenate((const1, ratio, const2), axis = 1)
+		for i in range(num_const):
+			const[i,index+1] =  -1*const[i,index]
+print(obj)
+print(const)
 rhs = np.array([rhs])
-	
 slack = np.identity(num_const)
 artif = np.zeros((num_const,num_const))
 
@@ -66,7 +83,8 @@ for index, val in enumerate(const_ineq):
 		big_matrix[index, num_vars+index] = -1
 		obj[-num_const+index] = -M
 		Cb[index] = -M
-	
+
+
 iter = 0 
 
 for column in big_matrix.T:
@@ -80,7 +98,7 @@ _in = []
 out = []
 while (True):
     #finding pivot element
-	pivot_col = int(np.where(cz == max(cz))[0][0])
+	pivot_col = int(np.where( cz > 0)[0][0])
 	#var going in
 	
 	if pivot_col in range(num_vars):
@@ -89,13 +107,19 @@ while (True):
 		var_in = 's'
 	else:
 		var_in = 'a'
-	temp = []
+	ratio = []
 	for i in range(num_rows):
 		if big_matrix[i][pivot_col] > 0:
-			temp.append(big_matrix[i][-1]/big_matrix[i][pivot_col])
+			ratio.append(big_matrix[i][-1]/big_matrix[i][pivot_col])
 		else: 
-			temp.append(9999)
-	pivot_row = int(np.where(temp == min(temp))[0][0])
+			ratio.append(-1)
+
+	if (all(i < 0 for i in ratio)):
+		print('Unbounded')
+		break
+	else:	
+		print(f'ratio = {ratio}')
+		pivot_row = int(np.where(ratio == min([i for i in ratio if i >= 0]))[0][0])
 	#var going out
 	if Cb[pivot_row] == -M:
 		var_out = 'a'
